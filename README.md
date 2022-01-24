@@ -6,6 +6,7 @@
 ### npm (CRA project to typescript)
 - styled-components: 5.3.3
 - recoil: 0.5.2
+- react-beautiful-dnd: 13.1.0
 
 ### Dev List
 - [x] Create and delete boards
