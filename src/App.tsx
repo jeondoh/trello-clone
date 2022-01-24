@@ -1,6 +1,9 @@
 import React from "react";
-import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
+import { DragDropContext, DropResult } from "react-beautiful-dnd";
 import styled, { createGlobalStyle } from "styled-components";
+import { RecoilLoadable, useRecoilState } from "recoil";
+import { toDoState } from "./atoms";
+import Board from "./Components/Board";
 
 const GlobalStyle = createGlobalStyle`
   @import url('https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400&display=swap');
@@ -78,7 +81,7 @@ const GlobalStyle = createGlobalStyle`
 
 const Wrapper = styled.div`
   display: flex;
-  max-width: 480px;
+  max-width: 680px;
   width: 100%;
   margin: 0 auto;
   justify-content: center;
@@ -89,54 +92,54 @@ const Wrapper = styled.div`
 const Boards = styled.div`
   display: grid;
   width: 100%;
-  grid-template-columns: repeat(1, 1fr);
+  gap: 10px;
+  grid-template-columns: repeat(3, 1fr);
 `;
-
-const Board = styled.div`
-  padding: 20px 10px;
-  padding-top: 30px;
-  background-color: ${(props) => props.theme.boardColor};
-  border-radius: 5px;
-  min-height: 200px;
-`;
-
-const Card = styled.div`
-  border-radius: 5px;
-  margin-bottom: 5px;
-  padding: 10px 10px;
-  background-color: ${(props) => props.theme.cardColor};
-`;
-
-const toDos = ["a", "b", "c", "d", "e", "f"];
 
 function App() {
-  const onDragEnd = () => {};
+  const [toDos, setTodos] = useRecoilState(toDoState);
+  const onDragEnd = (info: DropResult) => {
+    const { destination, draggableId, source } = info;
+    if (!destination) return;
+    if (destination.droppableId === source.droppableId) {
+      // 같은 보드내에서 움직임
+      setTodos((allBoards) => {
+        const copyTodos = [...allBoards[source.droppableId]];
+        // 1. 드래그 한 속성을 배열에서 제거
+        copyTodos.splice(source.index, 1);
+        // 2. 제거된 속성을 드래그 위치(Index)에 배열 삽입
+        copyTodos.splice(destination.index, 0, draggableId);
+        return {
+          ...allBoards,
+          [source.droppableId]: copyTodos,
+        };
+      });
+    }
+    // 다른 보드로 이동할때
+    if (destination.droppableId !== source.droppableId) {
+      setTodos((allBoards) => {
+        const sourceBoard = [...allBoards[source.droppableId]];
+        const destinationBoard = [...allBoards[destination.droppableId]];
+        sourceBoard.splice(source.index, 1);
+        destinationBoard.splice(destination.index, 0, draggableId);
+        return {
+          ...allBoards,
+          [destination.droppableId]: destinationBoard,
+          [source.droppableId]: sourceBoard,
+        };
+      });
+    }
+  };
   return (
     <>
       <GlobalStyle />
+      {/* 드래그를 끝냈을때 onDragEnd 함수 실행 */}
       <DragDropContext onDragEnd={onDragEnd}>
         <Wrapper>
           <Boards>
-            <Droppable droppableId="one">
-              {(magic) => (
-                <Board ref={magic.innerRef} {...magic.droppableProps}>
-                  {toDos.map((toDo, index) => (
-                    <Draggable draggableId={toDo} index={index}>
-                      {(magic) => (
-                        <Card
-                          ref={magic.innerRef}
-                          {...magic.dragHandleProps}
-                          {...magic.draggableProps}
-                        >
-                          {toDo}
-                        </Card>
-                      )}
-                    </Draggable>
-                  ))}
-                  {magic.placeholder}
-                </Board>
-              )}
-            </Droppable>
+            {Object.keys(toDos).map((boardId) => (
+              <Board key={boardId} toDos={toDos[boardId]} boardId={boardId} />
+            ))}
           </Boards>
         </Wrapper>
       </DragDropContext>
