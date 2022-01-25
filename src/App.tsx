@@ -105,10 +105,11 @@ function App() {
       // 같은 보드내에서 움직임
       setTodos((allBoards) => {
         const copyTodos = [...allBoards[source.droppableId]];
+        const taskObj = copyTodos[source.index];
         // 1. 드래그 한 속성을 배열에서 제거
         copyTodos.splice(source.index, 1);
         // 2. 제거된 속성을 드래그 위치(Index)에 배열 삽입
-        copyTodos.splice(destination.index, 0, draggableId);
+        copyTodos.splice(destination.index, 0, taskObj);
         return {
           ...allBoards,
           [source.droppableId]: copyTodos,
@@ -119,9 +120,10 @@ function App() {
     if (destination.droppableId !== source.droppableId) {
       setTodos((allBoards) => {
         const sourceBoard = [...allBoards[source.droppableId]];
+        const taskObj = sourceBoard[source.index];
         const destinationBoard = [...allBoards[destination.droppableId]];
         sourceBoard.splice(source.index, 1);
-        destinationBoard.splice(destination.index, 0, draggableId);
+        destinationBoard.splice(destination.index, 0, taskObj);
         return {
           ...allBoards,
           [destination.droppableId]: destinationBoard,
